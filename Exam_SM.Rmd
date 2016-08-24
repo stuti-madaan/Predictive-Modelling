@@ -1,0 +1,1349 @@
+---
+title: 'Exam: Predictive Modeling'
+author: "Stuti Madaan (sm63332)"
+date: "August 04, 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Exam Questions #
+                              
+##Exam Question 1##
+**Part -1 Using the data, estimate the effect of "beauty" into course ratings. Make sure to think about the potential many "other determinants". Describe your analysis and your conclusions.**
+
+**(A)Linear model Score vs beauty:**
+
+```{r model1}
+beauty = read.csv("E:/R Directory/csv_files/BeautyData.csv")
+beauty.fit<- glm(CourseEvals~BeautyScore, data =beauty)
+summary(beauty.fit)
+confint(beauty.fit)
+beauty$pred = predict(beauty.fit, beauty)
+```
+>It can be seen below that all the variance has been explained by beauty variable through a linear relationship.
+
+```{r ,echo=FALSE}
+options(warn=-1)
+plot(beauty.fit$residuals,beauty$BeautyScore)
+RMSE = sqrt(mean((beauty$pred- beauty$CourseEvals)^2))
+cat("RMSE from CourseEvals vs BeautyScore:", RMSE)
+```
+
+>RMSE of 0.4798 with a confidence interval not containing zero shows that there is a correlation between BeautyScore and CourseEvals. The correlation is positive as an be judged by the positive slope. The plot above shows that the residuals are random when plotted against Beauty Score. This implies that all the variation in CourseEvals that is dependent on BeautyScore has been explained by the linear relationship between the two. Even though Beauty seems to affect the course ratings, in reality, there can be several other factors that will impact the CourseEvals. For example, it can be that the people, who are physicaly fit(therefore, higher beauty score) are more organized and effective in their teaching skills. It is also possible that the faculty with a higher beauty score is younger and employs more creative methods for educating the students. This will again lead to a higher CourseEvals for a faculty with higher beauty score.
+
+>Thus, it can be concluded that a higher beauty score may not be directly impacting the CourseEvals. The relationship between Beauty score and CourseEvals could be more of a correlation rather than causal effect.That's why we might get a positive relationship. The 'true' factors affecting CourseEvals might be closely related to 'beauty score'.
+
+**Trying out the combination of beauty and other variables:**
+
+**(B)Linear model Score vs beauty and Tenure Track**
+
+>If we look at the Confidence interval for tenuretrack, it contains zero. Thus, we can't be certain of  the relationship between Tenure track and CourseEvals. Also, the p-value is very low for tenuretrack which shows that it does not predict CourseEvals all that well.
+
+```{r model2,echo=FALSE}
+beauty.fit2<- glm(CourseEvals~BeautyScore+tenuretrack, data =beauty)
+summary(beauty.fit2)$coeff
+confint(glm(CourseEvals~ BeautyScore+tenuretrack,data=beauty))
+beauty$pred2 = predict(beauty.fit2, beauty)
+RMSE2 = sqrt(mean((beauty$pred2- beauty$CourseEvals)^2))
+cat("RMSE from CourseEvals vs BeautyScore & tenuretrack:", RMSE2)
+```
+
+**(C)linear model score vs Beauty and nonenglish**
+
+>We can see that both BeautyScore and nonenglish have positive and negative correlation,respectively, with CourseEvals. Also, the confidence intervals do not contain zero thus, the null hypothesis is rejected for both these variables. However, the marginal reduction in the RMSE because of nonenglish is very less.
+
+```{r model3,echo=FALSE}
+beauty.fit3<- glm(CourseEvals~BeautyScore+nonenglish, data =beauty)
+summary(beauty.fit3)$coeff
+confint(glm(CourseEvals~ BeautyScore+nonenglish,data=beauty))
+beauty$pred3 = predict(beauty.fit3, beauty)
+RMSE3 = sqrt(mean((beauty$pred3- beauty$CourseEvals)^2))
+cat("RMSE from CourseEvals vs BeautyScore & nonenglish:" ,RMSE3)
+```
+
+**(D) linear model score vs Beauty + non-English + female**
+
+>It can be seen that the female variable is very predictive in determining the CourseEvals. i.e. RMSE has reduced directly to 0.21. Also, the confidence interval does not contain zero.Thus, we can be certain of the negative correlation between female and CourseEvals.
+
+```{r ,echo=FALSE}
+summary(glm(CourseEvals~ BeautyScore+nonenglish+female,data=beauty))$coeff
+confint(glm(CourseEvals~ BeautyScore+nonenglish+female,data=beauty))
+beauty$pred4 <- predict(glm(CourseEvals~ BeautyScore+nonenglish+female,data=beauty), beauty )
+RMSE4 = mean((beauty$pred4- beauty$CourseEvals)^2)
+cat("RMSE from CourseEvals vs BeautyScore, nonenglish and female:" ,RMSE4)
+```
+
+**(E) linear model score vs Beauty + non English + Female + Lower**
+
+>Lastly,adding the variable 'lower' further reduces the error to 0.18 with a negative correlation between lower and CourseEvals.
+
+```{r model5, echo=FALSE}
+summary(glm(CourseEvals~ BeautyScore+nonenglish+female+lower,data=beauty))$coeff
+confint(glm(CourseEvals~ BeautyScore+nonenglish+female+lower,data=beauty))
+beauty$pred5 <- predict(glm(CourseEvals~ BeautyScore+nonenglish+female+lower,data=beauty), beauty )
+RMSE5 = mean((beauty$pred5- beauty$CourseEvals)^2)
+cat("RMSE from CourseEvals vs BeautyScore, nonenglish, female and lower:", RMSE5)
+```
+
+**Anlaysis:**
+
+>I linearly regressed the Evaluation Score against beauty score only to establish if we see a relationship significant enough to keep this variable as one of the determinants. A positive slope, lower p-value and 95% confidence interval greater than 0 establishes that there is a positive correlation between Evaluation Score and beauty score. i.e. For every one unit increase in beauty score, there is 0.27 points increase in Evaluation score.
+
+>Further, I tried to add the variable tenuretrack to establish any relationship. However, adding tenuretrack to the equation only marginally improves the standard error. Also, the confidence interval for tenuretrack contains zero which establishes that it is not a statistically significant variable in this context. However, the significance of beauty score is intact.
+
+>Sequentially adding the variables female, lower and non-English further reduce the error with negative correlations to the Evaluation Score. i.e. with increase in one unit of any of these variables (keeping others constant) will decrease the Evaluation Score by abs(coefficient) amount. 
+From the analysis, it can be derived that 'beauty score' is one of the drivers of the Evaluation Score i.e. Keeping all other variables constant, one unit increase in beauty score will increase Evaluation score by 0.25 units. However, this is not the only major driver for Evaluation Score. Variables like male/Female, non-English, lower better determine the overall Evaluation Score.
+So, from the data at hand, it can be concluded that an English speaking woman not of lower division tends to have a higher Evaluation Score.
+
+**Part -2: In his paper, Dr. Hamermesh has the following sentence: "Disentangling whether this outcome represents productivity or discrimination is, as with the issue generally, probably impossible". Using the concepts, we have talked about so far, what does he mean by that?**
+
+>The productivity of an instructor should have been the predictor of the Evaluation Score. However, productivity is something that cannot be measured directly and thus, we use proxy for productivity like non English, female, lower division to try and capture what all factors might be impacting students while evaluating the instructor. Now, the ratings by students are biased both by beauty and productivity of the instructor. For this scenario, beauty and productivity are probably highly correlated whihc makes it difficult to isolate the effects of their individual effects. Thus, it is not clear whether the final Evaluation Score is due to productivity or discrimination based on beauty. This is exactly what the author means by "Disentangling whether this outcome represents productivity or discrimination is, as with the issue generally, probably impossible".
+
+##Exam Question 2 ##
+
+**Use regression models to estimate the pricing structure of houses in this town and answer the following questions:**
+
+```{r question2_i,echo=FALSE}
+midcity = read.csv ("E:/R Directory/csv_files/MidCity.csv")
+# Ignore Home as a predictor
+midcity$Nbhd=as.factor(midcity$Nbhd)
+final_data = midcity[,-1]
+```
+```{r}
+#model fitting: 
+price.fit<- lm(Price~Nbhd+Offers+SqFt+Brick+Bedrooms+Bathrooms+ Nbhd:Brick ,data=final_data)
+summary(price.fit)
+final_data$pred1 <- predict (price.fit, final_data)
+```
+
+**1. Is there a premium for brick houses everything else being equal?**
+
+>Yes. The slope for brick houses is 12093 and intercept is 3695. Net quantity, being positive, implies that if it's a brick house, the price will be 12093 dollars more expensive as compared to non-brick houses, given all other variables are constant. Thus, there is a premium for the brick houses.
+
+**2. Is there a premium for houses in neighborhood 3?**
+
+>Yes. The slope for Nbhd3 is 16980 and intercept is 3695. Net quantity being positive implies that if it's in Neighborhood 3, the price will be 16980 dollars higher for it as compared to neighborhood 1, given all other factors do not change. However, for Neighborhood 2, the price will be 1317 dollars less than that of Neighborhood 1 given all other variables are same. Also, the price will be 15663  dollars higher than neighbor 2.Thus, there is a premium for houses in neighborhood 3.
+
+**3. Is there an extra premium for brick houses in neighborhood 3?**
+
+>Yes. We find this out by using the interaction term between Neighborhod variable and Brick variable. It can be observed below that the interaction between Neighborhood 3 and Brick yes is significant. i.e. A house in neighborhood 3 with bricks will be 11933 dollars more than the ones without the brick. So, there is a premium for houses in Neighborhood 3 with bricks or without bricks
+
+```{r,echo=FALSE}
+summary(price.fit)
+```
+
+**4. For the purposes of prediction could you combine the neighborhoods 1 and 2 into a single "older" neighborhood?**
+
+>Although there is no reduction in the standard error by making this change. The model is better. As can be seen in previous example, the Neighborhood 1 and 2 segregations is insignificant with a high p-value for nighborhood2 dummy variable. Thus, combining them makes all the neighborhood variables significant.
+
+```{r,echo=FALSE}
+final_data[which(final_data$Nbhd %in% c(1,2)),'Nb_new']='old'
+final_data[which(final_data$Nbhd ==3),'Nb_new']='new'
+data2= final_data[,c(2:7,9)]
+price.fit2<- lm(Price~Nb_new+Offers+SqFt+Brick+Bedrooms+Bathrooms+ Nb_new:Brick ,data=data2)
+summary(price.fit2)
+confint(price.fit2)
+```
+
+## Exam Question 3 ## 
+
+**1. Why can't I just get data from a few different cities and run the regression of "Crime" on "Police" to understand how more cops in the streets affect crime? ("Crime" refers to some measure of crime rate and "Police" measures the number of cops in a city)**
+
+>Because presence of more police in a city can be due to several other reasons such as to prevent a terrorist attack or to carry out a political rally. In such cases, it will not be correct to directly attribute the presence of more police to more 'crime'. Although, it has been observed that if a lot of police is present, the crime rate decreases, which represents the causal effect of more police on crime. Also, the data from different cities would vary a lot. Reasons for more police can vary from city to city. If there are more police in one city and crime has reduced, this does not establish that the cities with low police will have an increased crime. Some cities inherently carry a crime rate which is independent of the police force available. 
+
+>Also, the presence of police and crime rates in different cities are independent of each other and combining the data from different cities to establish this relationship can be misleading.
+
+**2. How were the researchers from UPENN able to isolate this effect? Briefly describe their approach and discuss their result in the "Table 2" below.**
+
+>Researchers checked the midday ridership on alert days vs normal days. They found out that the midday ridership hadn't changed even on the alert days. This negates the theory that "less number of crimes on alert days can be attributed to people staying indoors due to fear of terror". The researchers found that there was no change in midday ridership but the crime had actually reduced because of the presence of more police on terror alert days.
+
+>Initially, the researchers tried to regress the Daily total number of crimes in DC with High Alert. The negative coefficient of -7 says that on high alert days, there are seven less crimes per day.
+The second model considers the log of midday ridership along with the High alert categorical variable. The negative coefficient of -6 says that given the ridership does not change, the number of crimes go down by 6 on high alert days. Also, it says that on any given day (high alert or not is fixed), the crime goes up by 17 crimes if the log of ridership increases by one unit.
+
+>Since in the study by researchers, midday ridership was observed to be the same as no alert day, the crime should decrease by 6 units. Thus, there is a causal relationship between 'Police' and 'Crime'.
+
+**3. Why did they have to control for METRO ridership? What was that trying to capture?**
+
+>The researchers proposed that the presence of increased police in DC led to a decrease in crimes. However, a possible counter argument was that people are staying indoors due to terror threat. Thus, Criminals are also staying indoors due to terror threat, and thus, lower crime rates. To isolate the effect of high alert on crimes, they controlled the METRO ridership. They found that the metro ridership was in fact the same and the reduction in crime rate was due to increased police.  The researchers were trying to capture this isolated impact of high alert on crime rates through this experiment.
+
+**4. In the next page, I am showing you "Table 4" from the research paper. Just focuson the first column of the table. Can you describe the model being estimated here? What is the conclusion?**
+
+>The table shows that the effect of High Alert can be segregated for different cities. For example, for district 1, a high alert would decrease the crimes by 2-3 crimes per day given the midday ridership doesn't change. The standard error of 0.044 shows that the interval of variation of coefficient is (-2.533, -2.709). Since zero does not lie in this range, we can be 95% confident about the decrease in crime of District 1 on high alert day. 
+
+>However, for other districts, the decrease in crimes would be 0.5 on high alert days given midday ridership stays the same. The standard error is 0.455 that gives the confidence interval of (-1.471, 0.329). Since zero lies in the confidence interval. We cannot be sure whether there is a relationship between Other districts' crimes and high alert days. Thus, there is a negligible effect on crimes in other districts even on high alert days. One possible reason is that if the high alert is for district 1, it would not increase the police in other districts and the crime would continue in the normal way.
+Now looking at the midday ridership variable, given any fixed day (either high alert or not), it seems that an increase by one unit in log(midday ridership), it will lead to an increase in the crimes by 2 per day. Also the confidence interval does not contain zero. Thus, we can be 95% confident of the positive correlation between ridership and crimes.  
+
+>It can be concluded that the impact of high alert is different for different districts.
+
+\pagebreak
+
+# Book Questions: Chapter 2#
+
+### Question10 ###
+
+**(a) To begin, load in the Boston data set. The Boston data set is part of the MASS library in R.**
+
+*Reading the first 6 rows:*
+
+```{r,echo=F}
+library(MASS)
+#attach(Boston)
+head(Boston)
+```	
+
+**How many rows are in this data set?**
+```{r}
+nrow(Boston)
+```   
+   
+**How many columns?**
+```{r}
+ncol(Boston)
+```
+
+**What do the rows and columns represent?**
+   
+>The 506 rows are the observations for housing values in Suburbs of Boston and the columns represent the features for them.
+
+>This data frame contains the following columns:
+
+>*crim*: per capita crime rate by town.
+
+>*zn*:proportion of residential land zoned for lots over 25,000 sq.ft.
+
+>*indus*:proportion of non-retail business acres per town.
+
+>*chas*: Charles River dummy variable (= 1 if tract bounds river; 0 otherwise).
+
+>*nox*:nitrogen oxides concentration (parts per 10 million).
+
+>*rm*:average number of rooms per dwelling.
+
+>*age*:proportion of owner-occupied units built prior to 1940.
+
+>*dis*:weighted mean of distances to five Boston employment centres.
+
+>*rad*:index of accessibility to radial highways.
+
+>*tax*:full-value property-tax rate per \$10,000.
+
+>*ptratio*:pupil-teacher ratio by town.
+
+>*black*:1000(Bk - 0.63)^2 where Bk is the proportion of blacks by town.
+
+>*lstat*:lower status of the population (percent).
+
+>*medv*:median value of owner-occupied homes in \$1000s.
+
+**(b) Make some pairwise scatterplots of the predictors (columns) in this data set. Describe your findings.**
+
+```{r,echo=F,fig.width=20, fig.height=20}
+pairs(Boston, gap = 0, pch ="." ,cex=3)
+``` 
+
+>*Description:*
+
+>* There Is a negative correlation between crime rate and median value of house. Most of the houses are in the zero crime rate region. Crime also correlates with age, dis, rad, tax and ptratio
+
+>* As the weighted mean of distances to five Boston employment centres increases, median value seems to increase. Possible explanation people want to buy houses not very close to work place/industrial areas. The employment centres might be very noisy 
+
+>* There is a correlation between zn and nox. Other variables correlated to zn are age, lstat and nox.
+
+>* indus is correlated with age and dis
+
+>* nox is also correlated with age and dis. dis is additionally correlated with lstat and lstat is correlated with medv as well.
+	 
+**(c) Are any of the predictors associated with per capita crime rate? If so, explain the relationship.**
+
+>*By looking at the correlation chart above, the crime rate per capita is related to the following variables:*
+
+>* Age: the crime rate is higher in regions where houses are old. 
+
+>* Dis :  As the distance from the employment companies increase, crime rate decreases
+
+>* Black: After a certain population for blacks, the crime rate seems to be increasing with increasing number of blacks. Its also possible that since all the blacks live together, any crime rate in any other proportion of blacks is not captured 
+
+>* Lstat: As the %of lower status is low, the crime rates are not so high. They increase with the increase in % of people with lstat
+
+**(d) Do any of the suburbs of Boston appear to have particularly high crime rates?**
+
+>*Overall values of All variables:*
+
+>Though overall summary, we can find the variables that vary from their mean/median values:
+
+```{r,echo=F}
+summary(Boston)
+```
+
+**Checking crime rates**
+
+>Yes. Around 2 percent suburbs have high crime rates. Crime rate for suburbs which are 99 perentile and above is 41%.
+
+```{r,echo=F,fig.width=4, fig.height=4}
+summary(Boston$crim)
+quantile(Boston$crim,0.99)
+hist(Boston$crim,main="Histogram of Crime Rates")
+``` 
+
+**Checking Tax rates:**
+
+>Yes. 20% of the suburbs have more than 666 as full-value property-tax rate per \$10,000  
+
+```{r,echo=F,fig.width=4, fig.height=4}
+summary(Boston$tax)
+hist(Boston$tax,main= "Histogram of Tax")
+```
+
+**Checking Pupil-teacher ratios?**
+
+>No suburbs have a particularly high Pupil teacher ratio as compared to the mean, median or 99th percentile of the data
+
+```{r,echo=F,fig.width=4, fig.height=4}
+hist(Boston$ptratio,main="Histogram of Pupil Teacher Ratio")
+summary(Boston$ptratio)
+```
+
+**Comment on the range of each predictor.**
+
+```{r,echo=F}
+print("dis")
+summary(Boston$dis)
+print("crim")
+summary(Boston$crim)
+print("lstat")
+summary(Boston$lstat)
+```
+>* Crime Rate has a wide range from 0% to upto 89% with 2% of the suburbs having more than 40% crime rate
+
+>* Proportion for zone allotment is higher for the areas: low crime rate, less retail services, most of them do bound the river , moderate age, moderate other factors as well
+
+>* Only 25% top percentile of the suburbs have a displacement >6
+
+>* There are around 25% suburbs with percent of lower status of population >17%. Also, the maximum percentage is 38%
+
+**(e) How many of the suburbs in this data set bound the Charles river?**
+
+*471 suburbs*
+
+```{r,echo=F}
+table(Boston$chas)
+```
+
+**(f) What is the median pupil-teacher ratio among the towns in this data set?**
+
+```{r,echo=F}
+median(Boston$ptratio)
+```
+
+**(g) Which suburb of Boston has lowest median value of owner occupied homes? What are the values of the other predictors? for that suburb, and how do those values compare to the overall ranges for those predictors?Comment on your findings.**
+
+```{r,echo=F}
+cat("Data: ")
+
+Boston[which(Boston$medv==min(Boston$medv)),]
+cat("Summary of suburbs with lowest median value of owner occupied homes: ")
+summary(Boston[which(Boston$medv==min(Boston$medv)),])
+```
+
+**Features of Suburbs with lowest median value of owner occupied homes:**
+
+>*	Crime rate lies between 75 percentile and maximum value i.e. High Crime Rate
+
+>*	Zero land proportion of residential land zoned for lots over 25,000 sq.ft
+
+>*	Proportion of non-retail business acres per town is relatively more: 75 percentile
+
+>*	These do not bound river
+
+>*	Nitrogen oxides are also on the higher sides
+
+>*	Average number of rooms per dwelling <6 (within 25 percentile)
+
+>*	These suburbs are very old
+
+>*	weighted mean of distances to five Boston employment centres is within 1st quartile. i.e . close to employment centers
+
+>*	high Rad: index of accessibility to radial highways
+
+>*	High taxes: full-value property-tax rate per \$10,000.
+
+>*	High: pupil-teacher ratio by town (less teachers available)
+
+>*	1000(Bk - 0.63) ^2 where Bk is the proportion of blacks by town : on the higher end
+
+>*	Lstat: lower status of population: on the higher end
+
+
+**(h) In this data set, how many of the suburbs average more than seven rooms per dwelling?**
+
+>*64 suburbs*
+
+```{r,echo=F}
+table(Boston$rm>7)
+```
+
+**Check for more than eight rooms per dwelling?**
+
+>*13 suburbs*
+
+```{r,echo=F}
+table(Boston$rm>8)
+```
+
+**Comment on the suburbs that average more than eight rooms per dwelling.**
+
+```{r}
+summary(Boston[which(Boston$rm>8),])
+```
+
+>*	The crime rate is not so high
+
+>*	Proportion of Area zoned for lots over 25,000 sq.ft is 13% on average
+
+>*	proportion of non-retail business acres per town is not so high
+
+>*	Most of the areas do not bound river
+
+>*	Nitrogen oxide is on the lower side
+
+>*	The suburbs are very old on average
+
+>*	Distance from employment places is less 
+
+>* Radial expressway is close except for a few exceptional cases
+
+>* low taxes (less than average)
+
+>*	High teacher pupil ratio
+
+>*	Good number of blacks live there
+
+>*	Usually lower status of living
+
+\pagebreak
+
+# Book Questions: Chapter 3#
+
+### Question15 ###
+
+```{r,echo=F}
+attach(Boston)
+head(Boston)
+```
+
+**(a) For each predictor, fit a simple linear regression model to predict the response. Describe your results. In which of the models is there a statistically significant association between the predictor and the response? Create some plots to back up your assertions.**
+
+i) crim ~ zn:
+
+*Significant relationship exists*
+
+```{r,echo=F}
+fit1<-glm(crim~zn,data=Boston)
+summary(fit1)$coeff
+```
+
+ii)crim~indus
+
+*Significant relationship exists*
+
+```{r,echo=F}
+fit2<-glm(crim~indus,data=Boston)
+summary(fit2)$coeff
+```
+
+iii)crim~chas
+
+*Significant relationship does not exist*
+
+>There is no relationship between chase and crim rates on the plot
+
+```{r,echo=F}
+fit3<-glm(crim~chas,data=Boston)
+summary(fit3)$coeff
+```
+
+iv) crim~nox
+
+*Significant relationship exists*
+
+```{r,echo=F}
+fit4<-glm(crim~nox,data=Boston)
+summary(fit4)$coeff
+```
+
+v)crim~rm
+
+*Significant relationship exists*
+
+```{r,echo=F}
+fit5<-glm(crim~rm,data=Boston)
+summary(fit5)$coeff
+```
+
+vi)crim~age
+
+*Significant relationship exists*
+
+```{r,echo=F}
+fit6<-glm(crim~age,data=Boston)
+summary(fit6)$coeff
+```
+
+vii)crim~dis
+
+*Significant relationship exists*
+
+```{r,echo=F}
+fit7<-glm(crim~dis,data=Boston)
+summary(fit7)$coeff
+```
+
+viii)crim~red
+
+*Significant relationship exists*
+
+```{r,echo=F}
+fit8<-glm(crim~rad,data=Boston)
+summary(fit8)$coeff
+```
+
+ix)crim~gtax
+
+*Significant relationship exists*
+
+```{r,echo=F}
+fit9<-glm(crim~tax,data=Boston)
+summary(fit9)$coeff
+```
+
+x)crim~ptratio
+
+*Significant relationship exists*
+
+```{r,echo=F}
+fit10<-glm(crim~ptratio,data=Boston)
+summary(fit10)$coeff
+```
+
+xi)crim~black
+
+*Significant relationship exists*
+
+```{r,echo=F}
+fit11<-glm(crim~black,data=Boston)
+summary(fit11)$coeff
+```
+
+xii)crim~lstat
+
+*Significant relationship exists*
+
+```{r,echo=F}
+fit12<-glm(crim~lstat,data=Boston)
+summary(fit12)$coeff
+```
+
+xiii)crim~medv
+
+*Significant relationship exists*
+
+```{r,echo=F}
+fit13<-glm(crim~medv,data=Boston)
+summary(fit13)$coeff
+```
+
+```{r,echo=F,fig.height=20}
+par(mfrow=(c(3,2)))
+plot(zn,crim)
+plot(indus,crim)
+plot(chas,crim)
+plot(nox,crim)
+plot(rm,crim)
+plot(age,crim) 
+par(mfrow=(c(3,2)))
+plot(dis,crim)
+plot(rad,crim)
+plot(tax,crim)
+plot(ptratio,crim)
+plot(black,crim)
+plot(lstat,crim)
+par(mfrow=(c(3,2)))
+plot(medv,crim)
+```
+```{r,echo=F,include=F}
+dev.off()
+``` 
+
+**(b) Fit a multiple regression model to predict the response using all of the predictors. Describe your results. For which predictors can we reject the null hypothesis H0 : Bj = 0?**
+
+>Using all predictors, I built a multivariable linear regression model
+
+>For zn,dis,rad,black and medv, Null Hypothesis H0 : Bj=0 will be rejected
+
+```{r,echo=F}
+glm.fit<- glm(crim~., data=Boston)
+summary(glm.fit)$coeff
+```
+
+**(c) How do your results from (a) compare to your results from (b)? Create a plot displaying the univariate regression coefficients from (a) on the x-axis, and the multiple regression coefficients from (b) on the y-axis. That is, each predictor is displayed as a single point in the plot. Its coefficient in a simple linear regression model is shown on the x-axis, and its coefficient estimate in the multiple linear regression model is shown on the y-axis.**
+
+>In Simple linear regression, all variables except 'chas' were significant. However, in Multiple regression, the significant variables are:
+
+>zn, dis, rad, black and medv only
+
+```{r,echo=F}
+column_name = colnames(Boston)[-1]
+coef_simp= NULL
+coef_simp = c(coef_simp,fit1$coef[2])
+coef_simp = c(coef_simp,fit2$coef[2])
+coef_simp = c(coef_simp,fit3$coef[2])
+coef_simp = c(coef_simp,fit4$coef[2])
+coef_simp = c(coef_simp,fit5$coef[2])
+coef_simp = c(coef_simp,fit6$coef[2])
+coef_simp = c(coef_simp,fit7$coef[2])
+coef_simp = c(coef_simp,fit8$coef[2])
+coef_simp = c(coef_simp,fit9$coef[2])
+coef_simp = c(coef_simp,fit10$coef[2])
+coef_simp = c(coef_simp,fit11$coef[2])
+coef_simp = c(coef_simp,fit12$coef[2])
+coef_simp = c(coef_simp,fit13$coef[2])
+coef_mult = coef(glm.fit)[-1]
+plot(coef_simp,coef_mult,pch=1:13,col=10:22,lty=c(1,1),main= "Coefficient- Multivariate v/s Coefficient- Univariate")
+legend(28,0.8,column_name,col=10:22,pch=1:13,cex=0.8)
+##create a table
+print(data.frame(cbind(coef_simp,coef_mult)))
+``` 
+
+**(d) Is there evidence of non-linear association between any of the predictors and the response? To answer this question, for each predictor X, fit a model of the form Y = B0 + B1X + B2X2 + B3X3 + e**
+
+i)crim~ zn+ zn^2 + zn^3
+
+*There is Association of non linear parameters till zn squared*
+
+```{r,echo=F}
+
+fit1<-lm(crim~poly(zn,3),data=Boston)
+summary(fit1)$coeff
+```
+
+ii)crim~ indus+ indus^2 + indus^3
+
+*Yes, Non linear terms are predictive*
+
+```{r,echo=F}
+fit2<-lm(crim~poly(indus,3),data=Boston)
+summary(fit2)$coeff
+```
+
+iii)crim~nox+ nox^2+ nox^3
+
+*Yes, they are associated*
+
+```{r,echo=F}
+fit4<-lm(crim~poly(nox,3),data=Boston)
+summary(fit4)$coeff
+```
+
+iv)crim~rm+rm^2 + rm^3
+
+*yes there is an association with non linear terms upto rm squared*
+
+```{r,echo=F}
+fit5<-lm(crim~poly(rm,3),data=Boston)
+summary(fit5)$coeff
+```
+
+v)crim~age +age^2 + age^3
+
+*Yes, there is an association with the non linear terms*
+
+```{r,echo=F}
+fit6<-lm(crim~poly(age,3),data=Boston)
+summary(fit6)$coeff
+```
+
+vi)crim~ dis+ dis^2 + dis^3
+
+*Yes, there is an association with the non linear terms*
+
+```{r,echo=F}
+fit7<-lm(crim~poly(dis,3),data=Boston)
+summary(fit7)$coeff
+```
+
+vii)crim~rad+rad^2 + rad^3
+
+*Yes there is an association with non linear terms upto rad squared*
+
+```{r,echo=F}
+fit8<-lm(crim~poly(rad,3),data=Boston)
+summary(fit8)$coeff
+```
+
+viii)crim~tax +tax^2 + tax^3
+
+*Yes there  is an association with non linear terms upto tax squared*
+
+```{r,echo=F}
+fit9<-lm(crim~poly(tax,3),data=Boston)
+summary(fit9)$coeff
+```
+
+ix)crim~ptratio+ ptratio^2 + ptratio^3
+
+*Yes, there is an association with the non linear terms*
+
+```{r,echo=F}
+fit10<-lm(crim~poly(indus,3),data=Boston)
+summary(fit10)$coeff
+```
+
+x)crim~ black+ black^2 + black^3
+
+*No association with non linear terms*
+
+```{r,echo=F}
+fit11<-lm(crim~poly(black,3),data=Boston)
+summary(fit11)$coeff
+```
+
+xi)crim~lstat+ lstat^2 + lstat^3
+
+*Yes there is an association with non linear term till lstat squared*
+
+```{r,echo=F}
+fit12<-lm(crim~poly(lstat,3),data=Boston)
+summary(fit12)$coeff
+```
+
+xii)crim~medv+ medv^2 + medv^3
+
+*Yes, the non linear term is predictive*
+
+```{r,echo=F}
+fit13<-lm(crim~poly(medv,3),data=Boston)
+summary(fit13)$coeff
+ 
+```
+
+\pagebreak
+
+# Book Questions: Chapter 4#
+
+### Question10 ###
+
+**(a) Produce some numerical and graphical summaries of the Weekly data. Do there appear to be any patterns?**
+
+>* Only Volume variable has a visible pattern over time.
+>* The same can be seen in correlation matrix as well.
+>* Lag variables do not have any identifiable pattern.
+
+```{r,echo=F,include=F}
+library(ISLR)
+head(Weekly)
+names(Weekly)
+```
+```{r}
+#Numerical Summary
+summary(Weekly)
+```
+
+```{r,fig.height=20,fig.width=15}
+#Graphical Summary
+pairs(Weekly,pch='.',cex=2.5)
+```
+```{r,echo=F,fig.height=4.5,fig.width=7}
+plot(Weekly$Volume,pch='.',cex=3)
+cat("Correlation check:") 
+cor(Weekly[,-9])
+```
+
+**(b) Use the full data set to perform a logistic regression with Direction as the response and the five lag variables plus Volume as predictors. Use the summary function to print the results. Do any of the predictors appear to be statistically significant? If so, which ones?**
+
+>Only Lag2 came out to be statistically significant
+
+```{r}
+#model fitting
+glm.fit<- glm(Direction~Lag1+Lag2+Lag3+Lag4+Lag5+Volume,data= Weekly,family='binomial')
+summary(glm.fit)
+
+```
+
+**(c) Compute the confusion matrix and overall fraction of correct predictions. Explain what the confusion matrix is telling you about the types of mistakes made by logistic regression.**
+
+>According to confusion matrix, we are correctly predicting 557 times when the market goes 'UP' and 54 times when the market goes 'DOWN'. However, we are mispredicting 430 'DOWN's as 'UP's and 48 'UPs' as 'DOWN's.
+
+>* *Overall correct guess = 56%*
+>* *False Down Rate=47%*
+>* *False Up Rate=43%*
+
+```{r}
+
+glm.pred<- predict(glm.fit, type='response')
+glm.prob=rep('Down',nrow(Weekly))
+glm.prob[glm.pred>0.5]<-'Up'#56% correct : false 'UP's
+cat("Confusion matrix: ")
+table(glm.prob , Weekly$Direction)
+
+```
+
+**(d) Now fit the logistic regression model using a training data period from 1990 to 2008, with Lag2 as the only predictor. Compute the confusion matrix and the overall fraction of correct predictions for the held out data (that is, the data from 2009 and 2010).**
+
+>Overall test correct rate : 62.5%
+
+```{r}
+train = Weekly[which(Weekly$Year<=2008),]
+test = Weekly[which(Weekly$Year>2008),]
+
+glm.pred.new<- glm(Direction~Lag2, data = train, family='binomial')
+glm.test.pred<- predict(glm.pred.new, newdata=test, type='response')
+glm.test.prob=rep('Down',104)
+glm.test.prob[glm.test.pred>0.5]<- 'Up'
+
+cat("Logistic Regression Confusion Matrix: ")
+table(test$Direction, glm.test.prob)
+```
+
+**(g) Repeat (d) using KNN with K = 1.**
+>Overall test correct rate :
+
+>* *50% with k =1* 
+>* *55% with k = 3*
+>* *53% with k=5* 
+
+```{r,echo=F}
+library(class)
+knn.pred<- knn(as.data.frame(train$Lag2),as.data.frame(test$Lag2), train$Direction, k=1)
+cat("Confusion Matrix using KNN with K=1: ")
+
+table(test$Direction, knn.pred)
+```
+
+**(h) Which of these methods appears to provide the best results on this data?**
+
+>Logistic Regression is performing the best amongst all the above methods with an overall correct rate of 62.5%.
+
+**(i) Experiment with different combinations of predictors, including possible transformations and interactions, for each of the methods. Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data. Note that you should also experiment with values for K in the KNN classifier.**
+
+>For logistic regression, I checked the interaction of Lag2 with Lag4. This gave a correct rate of 55.7%. ALso, I checked the pattern between Volume and Lag2 variables. Upon checking the trend between Lag2 and log(Volume) variables, the relation between the two seemes significant. However, upon using log(Volume) as one of the predictors, both Lag2 and Volume became insignificant. The best results are being produced by logistic regression with only Lag2 as the predictor. The overall correct rate for logistic regression is 62.5%. I also tried the classification using KNN which gives a correctness rate of 50.9%.
+
+```{r,echo=F}
+glm.pred.new2<- glm(Direction~Lag2:Lag4, data = train, family='binomial')
+glm.test.pred2<- predict(glm.pred.new2, newdata=test, type='response')
+glm.test.prob2=rep('Down',104)
+glm.test.prob2[glm.test.pred2>0.5]<- 'Up' 
+cat("Confusion Matrix(Logistic with Lag2:Lag4): ")
+
+table(test$Direction, glm.test.prob2) 
+```
+```{r,echo=F,fig.height=3.5,fig.width=7}
+cat("Plot between Lag2 and Volume: ")
+plot(train$Volume, train$lag2)
+
+cat("Plot between Lag2 and log(Volume):")
+plot(log(train$Volume), train$Lag2)
+
+train = Weekly[which(Weekly$Year<=2008),]
+test = Weekly[which(Weekly$Year>2008),]
+glm.pred.new2<- glm(Direction~Lag2, data = train, family='binomial')
+glm.test.pred2<- predict(glm.pred.new2, newdata=test, type='response')
+glm.test.prob2=rep('Down',104)
+glm.test.prob2[glm.test.pred2>0.5]<- 'Up' 
+cat("Confusion Matrix(Logistic): ")
+
+table(test$Direction, glm.test.prob2) 
+
+##knn## 
+knn.pred<- knn(train[,c(2:7)],test[,c(2:7)], train$Direction, k=100)
+
+cat("Confusion Matrix(KNN): ")
+table(test$Direction, knn.pred)
+
+```
+
+\pagebreak
+
+# Book Questions:Chapter 6#
+
+### Question 9 ###
+
+**In this exercise, we will predict the number of applications received using the other variables in the College data set.**
+
+**(a) Split the data set into a training set and a test set.**
+
+```{r,echo=F}
+#rm(list=ls())
+#library(glmnet)
+
+college = read.csv('E:/R Directory/csv_files/College.csv',header=T)
+college1=college[,-1]
+dummy_vars<- model.matrix(~Private+Accept+Enroll+Top10perc+Top25perc+F.Undergrad+P.Undergrad+Outstate+Room.Board+Books+Personal+PhD+Terminal+S.F.Ratio+perc.alumni+Expend+Grad.Rate,data=college1)[,-1]
+final = data.frame(college1$Apps, dummy_vars)
+set.seed(1)
+ind = sample(nrow(final),350)
+train = final[-ind,]
+test = final[ind,]
+cat('dim(train)',dim(train))
+cat('dim(test)',dim(test))
+```
+
+**(b) Fit a linear model using least squares on the training set, and report the test error obtained.**
+
+>Fit an MLR(Multivariate Linear Model) where I chose the variables manually in the forward selection modeling technique. The test error obtained using this method is 1211 Applications with variables Accept, Top10perc,Expend and F.Undergrad as significant variables.
+
+```{r,echo=F}
+
+#linear model
+lm.fit<- lm(college1.Apps~., data=train)
+summary(lm.fit)
+
+yhat<- predict(lm.fit,newdata=test)
+rmse= sqrt(mean((yhat-test$college1.Apps)^2))
+cat("Test Error(RMSE) using Linear regression is :",rmse) 
+```
+
+**(c) Fit a ridge regression model on the training set, with ?? chosen by cross-validation. Report the test error obtained.**
+
+>On fitting the Ridge regression and using cross-validation, the lambda with the lowest error is 0.01 which has a test error of 1062 Applications. However, if for the sake of simplicity of the model, we choose lambda.1se(largest value of lambda with error within 1 standard error of minimum error)i.e. 403 instead of lambda.min(lambda with minimum cross validation error), we get a test error of 1058 Applications.
+
+```{r,echo=F,include=F}
+library(glmnet)
+```
+```{r,echo=F,fig.width=7,fig.height =4}
+dummy_vars<- model.matrix(~Private+Accept+Enroll+Top10perc+Top25perc+F.Undergrad+P.Undergrad+Outstate+Room.Board+Books+Personal+PhD+Terminal+S.F.Ratio+perc.alumni+Expend+Grad.Rate,data=college1)[,-1]
+dummy_vars=scale(dummy_vars)
+Apps = (college1$Apps)
+set.seed(2)
+ind = sample(nrow(college1),350)
+grid=10^seq(10,-2,length=100)
+
+# with cross validation 
+ridge.fit.cv<- cv.glmnet(dummy_vars[-ind,],Apps[-ind],alpha=0,lambda=grid)
+plot(ridge.fit.cv)
+LamR = ridge.fit.cv$lambda.1se
+
+plot(log(ridge.fit.cv$lambda),sqrt(ridge.fit.cv$cvm),main="Ridge CV (k=10)",xlab="log(lambda)",ylab = "RMSE",col=4,type="b",cex.lab=1.2)
+abline(v=log(LamR),lwd=2,col=2)
+
+coef.R = predict(ridge.fit.cv,type="coefficients",s=LamR)
+dummy_vars1=data.frame(sample(1,nrow(dummy_vars),nrow(dummy_vars)) )
+colnames(dummy_vars1)="intercept"
+test_ridge = as.matrix(data.frame(dummy_vars1[ind,],dummy_vars[ind,]))
+predict <- test_ridge %*% as.matrix(coef.R)
+
+rmse = sqrt(mean((predict - Apps[ind])^2))
+cat("Test Error(RMSE) from Ridge Regression is: ",rmse)
+
+```
+
+**(d) Fit a lasso model on the training set, with ?? chosen by cross-validation. Report the test error obtained, along with the number of non-zero coefficient estimates.**
+
+>On fitting the Lasso regression and using cross-validation, the lambda with the lowest error is 100 which has a test error of 1109 Applications. However, if for the sake of simplicity of the model, we choose lambda.1se(largest value of lambda with error within 1 standard error of minimum error)i.e. 403 instead of lambda.min(lambda with minimum cross validation error), we get an error of 1155 applications.
+
+```{r,echo=F,fig.width=7,fig.height =4.5}
+
+#lasso.fit<- glmnet(dummy_vars[-ind,],Apps[-ind],alpha=1,lambda=grid)
+#plot(lasso.fit)
+
+grid=10^seq(10,-2,length=100)
+
+lasso.fit.cv<- cv.glmnet(dummy_vars[-ind,],Apps[-ind],alpha=1,lambda=grid)
+LamL<- lasso.fit.cv$lambda.1se
+plot(lasso.fit.cv)
+plot(log(lasso.fit.cv$lambda),sqrt(lasso.fit.cv$cvm),main="lasso CV (k=10)",xlab="log(lambda)",ylab = "RMSE",col=4,type="b",cex.lab=1.2)
+abline(v=log(LamL),lwd=2,col=2)
+
+coef.L = predict(lasso.fit.cv,type="coefficients",s=LamL)
+dummy_vars1=data.frame(sample(1,nrow(dummy_vars),nrow(dummy_vars)) )
+colnames(dummy_vars1)="intercept"
+test_ridge = as.matrix(data.frame(dummy_vars1[ind,],dummy_vars[ind,]))
+predict <- test_ridge %*% as.matrix(coef.L)
+
+rmse = sqrt(mean((predict - Apps[ind])^2))
+cat("Test Error(RMSE) from Lasso regression is:", rmse)
+cat("Total non-zero coefficients are:",lasso.fit.cv$nzero[grid==LamL] )
+
+```
+
+**(e) Fit a PCR model on the training set, with M chosen by cross validation. Report the test error obtained, along with the value of M selected by cross-validation.**
+
+>Fitting a model using cross validation on PCR gives an error of 1280 Applications with 10 Principal components. Error obtained using just two PCs is 1843. Since, the number of variables p<<n (number of observations), it uses all the variables and produces for lower error.
+
+```{r,echo=F}
+library(pls)
+pcr.fit=pcr(Apps[-ind]~dummy_vars[-ind,], scale=TRUE, validation="CV")
+validationplot(pcr.fit, val.type="MSEP")
+abline(v=10)
+bestncomp=10 #identified manually
+pcr.pred=predict(pcr.fit,newdata=dummy_vars[ind,],ncomp=bestncomp)
+cat("Test Error(RMSE): ",sqrt(mean((pcr.pred-Apps[ind])^2)))
+cat("M selected by cross validation:", bestncomp)
+```
+
+**(f) Fit a PLS model on the training set, with M chosen by cross validation. Report the test error obtained, along with the value of M selected by cross-validation.**
+
+>I fitted a PLS model by using 7 principal components and a test error of 1080 Applications
+
+```{r,echo=F}
+#library(pls)
+pls.fit = plsr(Apps[-ind]~dummy_vars[-ind,],scale=T,validation="CV")
+validationplot(pls.fit, val.type="MSEP")
+abline(v=7)
+summary(pls.fit)
+pls.pred = predict(pls.fit, newdata=dummy_vars[ind,],ncomp=7)
+cat("Test Error(RMSE): ",sqrt(mean((pls.pred-Apps[ind])^2)) )
+cat("M selected by cross validation:", 7)
+```
+
+**(g) Comment on the results obtained. How accurately can we predict the number of college applications received? Is there much difference among the test errors resulting from these five approaches?**
+
+>From the above analysis, following are the test errors obtained from different approaches:
+
+>* linear:1211
+>* ridge: 1058
+>* lasso: 1155
+>* PLS:1080
+>* PCR:1280
+
+>On an average, we can predict the number of Applications within +/- of 2000 aplications(+/- two sigma) with a 95% confidence interval. Also, the error from linear regression is the maximum at +/- 2400 applications with 95% confidence interval. For Ridge, PCR and PLS, the error is almost similar with slight deviations at ~1000 applications. Since these four techniques improve upon the Linear Regression model, no one technique is overpowering any other while improving the model. They all produce more or less the same test error.
+
+### Question 11 ###
+
+**We will now try to predict per capita crime rate in the Boston data set.**
+
+**(a) Try out some of the regression methods explored in this chapter, such as best subset selection, the lasso, ridge regression, and PCR. Present and discuss results for the approaches that you consider.**
+
+**Subset Selection**
+
+>I used the regsubsets function to perform the subset selection along with 10 fold cross validation. I checked the graph for optimum value of predictors for minimum error. 
+
+```{r,echo=F}
+#rm(list=ls())
+#library(MASS)
+library(leaps)
+## Subset Selection ##  
+set.seed(1232)
+ind = sample(nrow(Boston),200)
+
+predict.regsubsets = function(object, newdata, id, ...) {
+    form = as.formula(object$call[[2]])
+    mat = model.matrix(form, newdata)
+    coefi = coef(object, id = id)
+    mat[, names(coefi)] %*% coefi
+}
+k=10
+p=ncol(Boston)-1
+folds= sample(rep(1:k,length=nrow(Boston)))
+cv.errors = matrix(NA,k,p)
+for (i in 1:k){
+  best.fit=regsubsets(crim~.,data=Boston[folds!=i,],nvmax=p)
+  for (j in 1:p){
+    pred= predict(best.fit,Boston[folds==i,],id=j)
+    cv.errors[i,j]=mean((Boston$crim[folds == i] - pred)^2)
+    
+  }
+}
+rmse = sqrt(apply(cv.errors,2,mean))
+plot(rmse,pch=17,type='b')
+```
+```{r}
+which.min(rmse)
+rmse[which.min(rmse)]
+```
+
+**Ridge and Lasso**
+
+>For Ridge and Lasso fit of the model, I have split the data in Test and train. Then, I fit the Ridge regression on train using cv.glmnet function from (glmnet) library. A set of lambdas and the corresponding errors can be obtained from this. Then, I selected lambda for which the error is the minimum. I also checked lambda.1se but the error was less for Lambda.min.
+
+>Although, for Lasso regression, I chose lambda.1se(highest lambda whose error is within 1 standard error of the minimum error). I selected lambda.1se because with only 1 variable, I am getting an error of 6.60.
+
+```{r,echo=F,fig.width=7,fig.height =4.5}
+# Ridge #
+Boston$chas= as.factor(Boston$chas)
+vars<-scale(model.matrix(~zn+indus+chas+nox+rm+age+dis+rad+tax+ptratio+black+lstat+medv,data = Boston)[,-1])
+crim = (Boston$crim)
+set.seed(1232)
+ind= sample(nrow(Boston),200)
+
+#ridge.fit<- glmnet(as.matrix(vars[-ind,]), as.matrix(crim[-ind]),alpha = 0)
+#plot(ridge.fit)
+
+grid=10^seq(10,-2,length=100)
+CV.R<- cv.glmnet(as.matrix(vars[-ind,]), as.matrix(crim[-ind]),alpha = 0,lambda=grid)
+plot(CV.R)
+LamR<- CV.R$lambda.min
+
+plot(log(CV.R$lambda),sqrt(CV.R$cvm),main="Ridge CV (k=10)",xlab="log(lambda)",ylab = "RMSE",col=4,type="b",cex.lab=1.2)
+abline(v=log(CV.R$lambda.min),lty=2,col=2,lwd=2)
+abline(v=log(CV.R$lambda.1se),lty=2,col=4,lwd=2)
+
+cat("Test Error from Ridge: " ,sqrt(mean((crim[ind]-predict(CV.R, newx=vars[ind,],s=CV.R$lambda.min))^2)))
+
+#Lasso
+
+set.seed(1)
+grid=10^seq(10,-2,length=100)
+
+CV.L<- cv.glmnet(as.matrix(vars[-ind,]), as.matrix(crim[-ind]),alpha = 1,lambda=grid)
+LamL<- CV.L$lambda.min
+
+plot(log(CV.L$lambda),sqrt(CV.L$cvm),main="Lasso CV (k=10)",xlab="log(lambda)",ylab = "RMSE",col=4,type="b",cex.lab=1.2)
+abline(v=log(CV.L$lambda.1se),lty=2,col=3,lwd=2)
+abline(v=log(CV.L$lambda.min),lty=2,col=2,lwd=2)
+
+cat("Test Error from Lasso(minimum error lambda): " ,sqrt(mean((crim[ind]-predict(CV.L,newx= vars[ind,],s=CV.L$lambda.min))^2)))
+cat("Test Error from Lasso(one SE lambda): " ,sqrt(mean((crim[ind]-predict(CV.L, newx=vars[ind,],s=CV.L$lambda.1se))^2)))
+
+cat("Number of non zero coefficients(1se lambda): ",CV.L$nzero[grid==CV.L$lambda.1se])
+cat("Number of non zero coefficients(min lambda): ",CV.L$nzero[grid==CV.L$lambda.min])
+
+```
+
+**PCR**
+
+>I fit the model using PCR and checked the summary to identify the principal component for lowest error. Using that Principal component, I made predictions on test data and calculated corresponding RMSE. For PCR, Principal components upto 3 are able to reduce error to 5.19.
+
+```{r,echo=F}
+#library(pls)
+pcr.fit=pcr(Boston$crim[-ind]~vars[-ind,], scale=TRUE, validation="CV")
+validationplot(pcr.fit, val.type="MSEP")
+summary(pcr.fit)
+
+bestncomp=3 #identified manually
+pcr.pred=predict(pcr.fit,newdata=vars[ind,],ncomp=bestncomp)
+cat("Test RMSE from PCR = ",sqrt(mean((pcr.pred-Boston$crim[ind])^2)))
+cat("M selected by cross validation:", bestncomp)
+```
+
+**PLS**
+
+>I fit the model using PLS and checked the summary to identify the principal component for lowest error. Using that Principal component, I made predictions on test data and calculated corresponding RMSE. For PLS, Principal components upto 8 are able to reduce error to 5.13. Note that in case of PLS, less principal components are required since the PCs capture the dependence of response variables on independent variables while computing principal components. thus, the variance in Repsonse variable is captured in less number of principal components.
+
+```{r,echo=F}
+#library(pls)
+pls.fit = plsr(Boston$crim[-ind]~ vars[-ind,],scale=T,validation="CV")
+summary(pls.fit)
+pls.pred = predict(pls.fit, newdata=vars[ind,],ncomp=8)
+cat("Test Error from PLS= ",sqrt(mean((pls.pred-Boston$crim[ind])^2)) )
+cat("M selected by cross validation:", 8)
+
+```
+
+**(b) Propose a model (or set of models) that seem to perform well on this data set, and justify your answer. Make sure that you are evaluating model performance using validation set error, cross validation, or some other reasonable alternative, as opposed to using training error.**
+
+>Various models and their test RMSEs from cross validation are as below:
+
+>* Subset Selection : 6.45
+>* Ridge:5.02
+>* Lasso: 6.60
+>* PCR: 5.19
+>* PLS: 5.13
+
+>For this problem, I would suggest to go for PLS model which uses only 8 components with a very low error. Although the lowest error is being provided by Ridge compression, it includes all the variables of the model. PLS has reduced features while capturing most of the features of the model.
+
+**(c) Does your chosen model involve all of the features in the data set? Why or why not?**
+
+>No, PLS includes the first 8 Principal components. 
+If we look at the plot below, it can be seen that for 8 components, minimum error is being achieved.
+
+```{r,echo=F,fig.width=7,fig.height =4.5}
+validationplot(pls.fit, val.type="MSEP")
+```
+
+\pagebreak
+
+##Book Questions: Chapter 8##
+###Question 8###
+
+**In the lab, a classification tree was applied to the Carseats data set after converting Sales into a qualitative response variable. Now we will seek to predict Sales using regression trees and related approaches, treating the response as a quantitative variable.**
+
+**(a) Split the data set into a training set and a test set.**
+
+```{r,echo=F}
+#library(ISLR)
+head(Carseats)
+#lapply(Carseats, class)
+set.seed(20)
+ind = sample(nrow(Carseats),80)
+
+tr = Carseats[-ind,]
+test = Carseats[ind,]
+
+```
+
+**(b) Fit a regression tree to the training set. Plot the tree, and interpret the results. What test MSE do you obtain?**
+
+>Looking at the frame from summary of the tree, it can be derived that Price and Shelving location are the two variables which explain a lot of deviance in different nodes. Thus, they can be considered as the most important variables of the tree. The Test MSE obtained from this tree is 5.6 which is 2.36 RMSE.This means that overall Sales will vary by ~ +/- 5 units from the prediction.Pruning this tree reduces the error to +/-4 units.
+
+
+```{r,echo=F,fig.width=7,fig.height =4.5}
+library(rpart)
+library(tree)
+#fit the tree
+set.seed(1)
+tree.fit<- tree(Sales~ . ,data = tr )
+#length(unique(tree.fit$where))
+
+#plot the tree
+plot(tree.fit,type="uniform")
+text(tree.fit,col="blue",label=c("yval"),cex=.6,pretty=0)
+
+test_fit=predict(tree.fit,newdata=test)
+cat("Test MSE: ",(mean((test_fit - test$Sales)^2)) )## 3.77
+
+#prune the tree
+pruned.tree<- prune.tree(tree.fit, best = 3)
+
+#use tree.fit
+test_fit_wo_prune_i=predict(pruned.tree,newdata=test)
+cat("Test MSE After Pruning: ", (mean((test_fit_wo_prune_i - test$Sales)^2)))
+
+```
+
+**(c) Use cross-validation in order to determine the optimal level of tree complexity. Does pruning the tree improve the test MSE?**
+
+>After using cross validation, the best size came out to be 11. Yes, pruning the tree helps to improve the error in this case although the drcrease in test MSE is very less (5.38 from 5.6). The new MSE after Pruning is 5.38. 
+
+```{r,echo=F,fig.width=11,fig.height=8}
+## fit and cross validation using rpart 
+set.seed(20)
+
+temp<- cv.tree(tree.fit,FUN=prune.tree)
+```
+```{r,echo=F,fig.width=9,fig.height=4}
+plot(temp$size,temp$dev,type='b')
+
+#plot best tree size=11
+```
+
+```{r,echo=F,fig.width=11,fig.height=8}
+par(mfrow=c(1,1))
+best.tree = prune.tree(tree.fit, best=11)
+plot(best.tree,uniform=TRUE,branch=.7,margin=.085)
+text(best.tree,digits=2,use.n=TRUE,pretty=0,cex=0.75,col='blue')
+
+test_fit=predict(best.tree,newdata=test)
+cat("Test Error from simple tree with pruning and cross validation : ",(mean((test_fit - test$Sales)^2)) )
+
+```
+
+**(d) Use the bagging approach in order to analyze this data. What test MSE do you obtain? Use the importance () function to determine which variables are most important.**
+
+>Bagging technique of building trees produces an MSE of 3.51 with Shelving location and Price as the most important variables.
+
+```{r,echo=F,include=F}
+library(randomForest)
+```
+
+```{r,echo=F,include=F}
+set.seed(1)
+pred_bagging = randomForest(Sales~., data=tr, mtry = 10,nodesize=50,ntree=600)
+```
+```{r,echo=F}
+importance(pred_bagging)
+yhat_bagging<- predict(pred_bagging, newdata = test,mtry=10,nodesize=50,ntree=600)
+
+cat("Test MSE From Bagging: ",(mean((yhat_bagging - test$Sales)^2)))
+```
+
+**(e) Use random forests to analyze this data. What test MSE do you obtain? Use the importance() function to determine which variables are most important. Describe the effect of m, the number of variables considered at each split, on the error rate obtained.**
+
+>Using Random Forests to build tree produces a test error of 3.4, which is the least among the other methods tried before. Also, for this estimate I took the value for mtry = 6 (derived from the Error vs Mtry graph below), ntree=600 and nodesize=50.The most important variable comes out to be Shelving location, followed by price.
+
+>I also tried various values of m to capture its effect on the Test MSE obtained.
+
+```{r,echo=F,include=F,fig.height=4.5,fig.width=7}
+list_Errors=NULL
+for ( i in 1:15){
+  set.seed(1)
+  pred = randomForest(Sales~., data=tr, mtry = i,nodesize=50,ntree=800)
+  list_test_pred<- predict(pred, newdata = test)
+  list_Errors[i]=(mean((list_test_pred - test$Sales)^2)) 
+}
+```
+```{r,echo=F}
+plot(list_Errors)
+abline(v =6,col='red')
+```
+```{r,echo=F,include=F}
+set.seed(1)
+pred_rf = randomForest(Sales~., data=tr, mtry = 6,nodesize=50,ntree=600)
+```
+```{r,echo=F}
+importance(pred_rf)
+varImpPlot(pred_rf)
+yhat_rf<- predict(pred_rf, newdata = test,mtry=6,nodesize=50,ntree=600)
+cat("Test MSE From Bagging: ",(mean((yhat_rf - test$Sales)^2)))
+
+```
+
+###Question 11###
+
+**This question uses the Caravan data set.**
+
+**(a) Create a training set consisting of the first 1,000 observations, and a test set consisting of the remaining observations.**
+
+```{r,echo=F}
+New_response_var = ifelse(Caravan$Purchase=='Yes',1,0)
+Caravan_new = data.frame(Caravan[,c(1:85)], New_response_var)
+
+train = Caravan_new[c(1:1000),]
+test = Caravan_new[-c(1:1000),]
+```
+
+**(b) Fit a boosting model to the training set with Purchase as the response and the other variables as predictors. Use 1,000 trees, and a shrinkage value of 0.01. Which predictors appear to be the most important?**
+
+>With a bernoulli distribution(since its a categorical response variable, and interaction depth of 4, 'PPERSAUT' and 'MOPLHOOG' appear to be the most important variables for this model followed by 'MGODGE' and 'MKOOPKLA'.
+
+```{r,echo=F,include=F}
+library(gbm)
+set.seed(1)
+pred_gbm<- gbm(New_response_var~., data=train, shrinkage = 0.01,distribution = 'bernoulli',interaction.depth = 4, n.trees = 1000 )
+```
+```{r,echo=F}
+cat("Top 6 predictive variables are: ") 
+head(summary(pred_gbm))
+```
+
+**(c) Use the boosting model to predict the response on the test data. Predict that a person will make a purchase if the estimated probability of purchase is greater than 20 %. Form a confusion matrix. What fraction of the people predicted to make a purchase do in fact make one? How does this compare with the results obtained from applying KNN or logistic regression to this data set?**
+
+>From Gradient Boosting, 29% of the people who have been predicted to make a purchase do actually make one.
+
+>For Logistic regression, around 14% people who were predicted to make a purchase actually made one.
+
+>And lastly, for KNN, 17% people who were predicted to make a purchase do actually make one.
+
+>The Boosting method classifies the categorical response variable the best amongst all in for this problem.
+
+```{r,echo=F,include=F}
+new<- predict(pred_gbm,n.trees=1000,data=train)
+yhat_gbm<- predict(pred_gbm,newdata=test, n.trees=1000)
+yhat_new = ifelse(yhat_gbm>0.2, 1, 0)
+```
+```{r,echo=F}
+table(yhat_new,test$New_response_var)
+```
+
+```{r,echo=F,include=F}
+##Logistic regression##
+logit.fit<- glm(New_response_var~. , data=train, family='binomial')
+yhat_logit_test<- predict(logit.fit, newdata=test,type='response')
+yhat_logit_test2<-ifelse(yhat_logit_test>0.2, 1, 0)
+```
+
+```{r,echo=F}
+table(yhat_logit_test2,test$New_response_var)
+```
+
+```{r,echo=F,include=F}
+##knn##
+#library(class)
+set.seed(123457)
+knn_pred<- knn(train[,1:85],test[,1:85],train$New_response_var, k=10)
+```
+
+```{r,echo=F}
+table(knn_pred,test$New_response_var)
+```
