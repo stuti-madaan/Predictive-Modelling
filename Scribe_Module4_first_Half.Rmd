@@ -1,0 +1,242 @@
+---
+title: 'Module 4: Bootstrapping'
+author: "Nikita Lakhotia, Vishwa Bhuta, Stuti Madaan"
+date: "August 1, 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Standard Error and Sampling Distribution##
+
+###Standard Error###
+
+$SE(\bar{x}) = \frac{\hat{\sigma}}{\sqrt{n}}$
+
+where,
+
+SE: *Estimate of population standard deviation*
+
+$\hat{\sigma}$ : *Standard deviation of the sample*
+
+n : *sample size*
+
+We calculate standard error as a measure of our confidence in our answer. That confidence is tied to our certainty that we would derive a similar answer given a slightly different sample.  This is how we quantify how stable a statistic(like mean, median) is under repeated sampling from the population.
+
+###Sampling Distribution###
+
+In an ideal world:
+
+We could take an infinite number of samples from our population and derive the test statistic (eg. mean height of UT students) from each of those samples. The histogram of all the different $\hat{\theta}$'s that we get represents the "*sampling distribution*". Refer to Figure 1 in Appendix.
+
+```{r,echo=F,include=F}
+library(foreach)
+library(mosaic)
+```
+```{r,echo=F}
+
+gonefishing = read.csv('E:/Predictive Analytics Summer II/J.Scott/STA380/data/gonefishing.csv', header=TRUE)
+
+# Take a random sample from the population of fish in the lake
+n_fish = 30
+fishing_trip = mosaic::sample(gonefishing, n_fish)
+# Look at the measurements of the first five fish we caught
+#head(fishing_trip, 5)
+
+# Get sample mean of a new sample of population, repeated 365 times to simulate a whole year of 30-fish days
+my_fishing_year = foreach(i = 1:365, .combine='c') %do% {
+  fishing_trip = mosaic::sample(gonefishing, n_fish)
+  mean_weight_sample = mean(fishing_trip$weight)
+#  mean_weight_sample
+}
+
+```
+
+The Problem: it's unrealistic to generate that many samples. Our best estimate of the population, therefore, is our sample.
+
+##Bootstrapping##
+
+```{r,echo=F,fig.height=3,fig.width=6}
+# First take a single sample
+fishing_trip = mosaic::sample(gonefishing, n_fish)
+mean_weight_sample = mean(fishing_trip$weight)
+#mean_weight_sample
+
+# Now bootstrap that sample
+boot1 = foreach(i = 1:2500, .combine='c') %do% {
+  fishing_trip_bootstrap = resample(fishing_trip, n_fish)
+  mean_weight_bootstrap = mean(fishing_trip_bootstrap$weight)
+#  mean_weight_bootstrap
+}
+
+# Compare the true sampling distribution with the bootstrapped sampling distribution
+
+hist(my_fishing_year, 25,main='Population Sampling Distribution')
+hist(boot1, 25,main='Bootstrapping Sampling Distribution')
+
+# True versus bootstrapped standard error
+cat("Standard Deviation for Population Sampling Distribution: ",sd(my_fishing_year))
+cat("Standard Deviation for Bootstrapping: ",sd(boot1))
+```
+
+###How does Bootstrapping help?###
+
+* It allows us to create a sampling distribution using our one sample. 
+
+* It captures variability in the data. 
+
+* Has very few assumptions, and therefore can be used on situations of varying complexity
+
+* As the number of _original_ samples increases, the statistic is more likely to resemble the population parameter
+
+Assumption: the original sample is representative of the population
+
+
+###How does Bootstrap work?###
+
+1. Original sample size = n
+
+2. We take x number of resamples of size n from the original sample 
+
+  a. Resample with replacement: think about this as a bag filled with n marbles that are marked. For each resample, you pull out one marble, jot down the marking, and put the marble back in the bag. You keep doing this until you have n markings on your list. That's your first resample. Because you put the marble back in the bag, there is a chance that you could pick the same marble multiple times in your resample.
+
+    i. If you do this x number of times, you will have x number of resamples that are slightly different from each other. X should be very large.
+
+    ii. Each resample will have some duplicates, but the combination will be different across the resamples. 
+
+    iii. Across all the resamples, we are replicating the variability we might see in the population. 
+
+
+3. For each resample, we calculate the test statistic.
+
+
+4. The histogram of these test statistics gives us the "bootstrapped sampling distribution"
+
+
+5. The standard deviation of the bootstrap becomes our standard error, i.e. our confidence in our answers resembling the population.
+
+
+Refer to Figure 2 in Appendix.
+
+
+###What do I report? ###
+
+The test statistic (eg. mean) should be the test statistic of just the original sample. The standard error is the standard error we get from the bootstrapping.
+
+
+###When is bootstrapping useful?###
+
+The short answer: always. Bootstrapping allows us to simulate the population sampling distribution.
+
+The longer answer: bootstrapping is especially useful when the SE of the sample is not known or easy to calculate outright. For instance, in our fishing scenario, the SE of the sample would have simply been the formula we mention above. But if our example included complex tools like decision trees, or required multiple transformation, the SE becomes difficult to assess. Bootstrapping allows us to go around this. 
+
+##Bootstrap Example##
+
+####Standard Correlation vs Spearman's correlation####
+
+Standard/Pearson's Correlation:
+
+* linear relationship between the values of two variables
+* gets impacted by the outliers in the dataset
+
+Spearman's Correlation:
+
+* calculates relationship between the 'ranks' of the two variables
+* does not get impacted by the outliers in the dataset
+
+\pagebreak
+
+#### GDP Growth Example ####
+
+######**Scatter Plot for GDP Data**######
+
+```{r,echo=F,include=F}
+library(mosaic)
+library(foreach)
+```
+```{r,echo=F,fig.height=6,fig.width=8}
+gdpgrowth = read.csv('E:/Predictive Analytics Summer II/J.Scott/STA380/data/gdpgrowth.csv', header=TRUE)
+plot(gdpgrowth$DEF60, gdpgrowth$GR6096,
+     pch=19, col='grey',
+     xlab='Fraction GDP spent on national defense (1960)',
+     ylab='GDP growth rate, 1960-1996')
+points(gdpgrowth$DEF60[54], gdpgrowth$GR6096[54],col='blue')
+text(gdpgrowth$DEF60[54]-0.005, gdpgrowth$GR6096[54]-0.005,"Outlier",col='Blue',cex=1)
+outlier = 54
+```
+
+**Pearson's Correlation including Outliers:**
+
+```{r,echo=F}
+cor(gdpgrowth$DEF60, gdpgrowth$GR6096)
+```
+
+**Pearson's Correlation excluding Outliers:**
+
+```{r,echo=F}
+cor(gdpgrowth$DEF60[-outlier], gdpgrowth$GR6096[-outlier])
+```
+
+**Spearman's Correlation including Outliers:**
+
+```{r,echo=F}
+cor(gdpgrowth$DEF60, gdpgrowth$GR6096, method='spearman')
+```
+
+**Spearman's Correlation excluding Outliers:**
+
+```{r,echo=F}
+cor(gdpgrowth$DEF60[-outlier], gdpgrowth$GR6096[-outlier], method='spearman')
+
+```
+
+####**Bootstrap ordinary correlation**####
+
+```{r,echo=F,fig.width=9,fig.height=5}
+
+NMC = 1000
+boot1 = foreach(i=1:NMC, .combine='c') %do% {
+	gdp_boot = resample(gdpgrowth)
+	rho = cor(gdp_boot$DEF60, gdp_boot$GR6096)
+} 
+
+hist(boot1)
+```
+
+####**Bootstrap Spearman's correlation**####
+
+```{r,echo=F,fig.width=9,fig.height=5}
+# Bootstrap Spearman correlation
+boot2 = foreach(i=1:NMC, .combine='c') %do% {
+	gdp_boot = resample(gdpgrowth)
+	rho = cor(gdp_boot$DEF60, gdp_boot$GR6096, method='spearman')
+} 
+
+hist(boot2)
+
+```
+
+\pagebreak
+
+#####Explanation:#####
+
+It can be observed in above histograms that the distribution of Spearman's Correlation is narrower as compared to the distribution of Pearson's correlation. This is because Spearman's Correlation is not impacted by the Outlier present in the data. However, Pearson's Correlation distribution gets inflated due to the outliers. The outlier is present in some samples and absent in others when bootstrapped. This creates a wide range of variations in the statistic values obtained from each sample,thus, causing this inflation.
+
+Once we are comparing the ranks of these variables, SE is not as intuitive to calculate. However, with bootstrapping, do not need to calculate the SE of the sample. Instead, we just run the correlation many times with the resamples, we can easily calculate the standard deviation of the resulting correlations, thereby allowing us to quantify our uncertainty.
+
+
+###Conclusion: ###
+
+Bootstrapping provides a unified way to quantify uncertainty across many different statistical scenarios.
+
+\pagebreak
+
+
+##Appendix##
+
+
+![Population Sampling Distribution](E:/pop.png)
+
+![Bootstrapped Sampling Distribution](E:/boot.png)
+
